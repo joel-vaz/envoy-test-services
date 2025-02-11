@@ -58,4 +58,28 @@ docker-compose.override.yml
 .coverage
 htmlcov/
 .pytest_cache/
-.mypy_cache/ 
+.mypy_cache/
+
+# Additional Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.py[cod]
+*$py.class
+
+# Additional Docker
+*.env
+.env.*
+!.env.example
+
+# Additional IDE
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# Additional Logs
+log/
+tmp/
+temp/ 

@@ -115,3 +115,29 @@ Both applications use:
 
 - Docker
 - Docker Compose
+
+## Utility Scripts
+
+The project includes utility scripts in the `scripts` directory:
+
+```bash
+# Initial setup and start applications
+./scripts/setup.sh
+
+# View logs (all or specific app)
+./scripts/logs.sh        # All logs
+./scripts/logs.sh appa   # ApplicationA logs
+./scripts/logs.sh appb   # ApplicationB logs
+
+# Clean up resources and stop applications
+./scripts/clean.sh
+```
+
+Basic docker-compose commands:
+```bash
+# Start applications
+docker-compose up -d
+
+# Stop applications
+docker-compose down
+```
