@@ -39,6 +39,10 @@ static_resources:
               domains: ["*"]
               routes:
               - match:
+                  prefix: "/calculate"
+                route:
+                  cluster: appA_cluster
+              - match:
                   prefix: "/"
                 route:
                   cluster: appB_cluster
@@ -60,4 +64,18 @@ static_resources:
             address:
               socket_address:
                 address: appb
-                port_value: 5001 
+                port_value: 5001
+
+  - name: appA_cluster
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: appA_cluster
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: appa-proxy
+                port_value: 9901 
