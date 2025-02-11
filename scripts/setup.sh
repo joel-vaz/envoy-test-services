@@ -2,9 +2,6 @@
 
 # Setup script for development environment
 
-# Create necessary directories
-mkdir -p logs
-
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
     echo "Docker is not installed. Please install Docker first."
@@ -18,6 +15,7 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 # Create log directories
+cd "$(dirname "$0")/.."  # Change to project root directory
 mkdir -p logs/appa/proxy logs/appa/ingress logs/appb/proxy logs/appb/ingress
 
 # Set permissions

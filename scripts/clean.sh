@@ -1,9 +1,16 @@
 #!/bin/bash
 
-# Clean script for cleaning up Docker resources
+# Change to script directory
+cd "$(dirname "$0")"
+
+echo "Cleaning up resources..."
 
 # Stop containers
 docker-compose down
+
+# Clean up logs
+echo "Cleaning up logs..."
+rm -rf ../logs/*
 
 # Remove all stopped containers
 docker container prune -f
