@@ -1,4 +1,5 @@
 services:
+  # Application A
   appa:
     build:
       context: .
@@ -11,13 +12,39 @@ services:
     volumes:
       - ./src/appA/app:/app/app
     networks:
-      - app-network
+      - appa_net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
+  appa-proxy:
+    image: envoyproxy/envoy:v1.28-latest
+    volumes:
+      - ./envoy/appA/proxy.yaml:/etc/envoy/envoy.yaml
+    networks:
+      - appa_net
+      - proxy_net
+    depends_on:
+      appa:
+        condition: service_healthy
+    ports:
+      - "9902:9902"
+
+  appa-ingress:
+    image: envoyproxy/envoy:v1.28-latest
+    volumes:
+      - ./envoy/appA/ingress.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "8080:8080"
+      - "9901:9901"
+    networks:
+      - proxy_net
+    depends_on:
+      - appa-proxy
+
+  # Application B
   appb:
     build:
       context: .
@@ -27,15 +54,40 @@ services:
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
-      - TARGET_APP_URL=http://appa:5005
+      - TARGET_APP_URL=http://appa-proxy:9901
     volumes:
       - ./src/appB/app:/app/app
     networks:
-      - app-network
+      - appb_net
     depends_on:
       appa:
         condition: service_healthy
 
+  appb-proxy:
+    image: envoyproxy/envoy:v1.28-latest
+    volumes:
+      - ./envoy/appB/proxy.yaml:/etc/envoy/envoy.yaml
+    networks:
+      - appb_net
+      - proxy_net
+    depends_on:
+      - appb
+    ports:
+      - "9904:9904"
+
+  appb-ingress:
+    image: envoyproxy/envoy:v1.28-latest
+    volumes:
+      - ./envoy/appB/ingress.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "8081:8080"
+      - "9903:9903"
+    networks:
+      - proxy_net
+    depends_on:
+      - appb-proxy
+
 networks:
-  app-network:
-    driver: bridge 
+  appa_net:    # Private network for AppA and its proxy
+  appb_net:    # Private network for AppB and its proxy
+  proxy_net:   # Shared network for proxies to communicate 

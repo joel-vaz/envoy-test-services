@@ -1,20 +1,39 @@
-# Flask Applications Monitor
+# Flask Applications Monitor with Envoy Proxy
 
-A system of two Flask applications where ApplicationB monitors ApplicationA's endpoints.
+A system of two Flask applications with Envoy proxy for service mesh and ingress traffic.
+
+## Architecture
+
+Each application has three components:
+- Application container (Flask)
+- Proxy sidecar (Envoy for service-to-service communication)
+- Ingress sidecar (Envoy for external traffic)
+
+### Network Flow
+- External → AppA: Request → AppA Ingress (8080) → AppA Proxy (9901) → AppA (5005)
+- External → AppB: Request → AppB Ingress (8081) → AppB Proxy (9901) → AppB (5001)
+- Internal: AppB → AppB Proxy → AppA Proxy → AppA
 
 ## Project Structure
 
 ```
 project/
 ├── src/
-│   ├── appA/              # Main application with endpoints
+│   ├── appA/              # Main application
 │   │   └── app/
 │   │       ├── routes/    # API endpoints
 │   │       └── config.py
 │   └── appB/              # Monitoring application
 │       └── app/
-│           ├── routes/    # Monitoring endpoints
-│           └── services/  # Monitoring logic
+│           ├── routes/
+│           └── services/
+├── envoy/
+│   ├── appA/
+│   │   ├── ingress.yaml   # AppA ingress config
+│   │   └── proxy.yaml     # AppA proxy config
+│   └── appB/
+│       ├── ingress.yaml   # AppB ingress config
+│       └── proxy.yaml     # AppB proxy config
 ├── docker/
 │   ├── appA.Dockerfile
 │   └── appB.Dockerfile
@@ -45,41 +64,40 @@ Monitors ApplicationA with endpoints:
 docker-compose up --build
 ```
 
-2. Test ApplicationA endpoints:
+2. Test ApplicationA through ingress:
 ```bash
 # Health check
-curl http://localhost:5005/health
+curl http://localhost:8080/health
 
 # Hello endpoint
-curl http://localhost:5005/hello
+curl http://localhost:8080/hello
 
 # Whoami endpoint
-curl http://localhost:5005/whoami
+curl http://localhost:8080/whoami
 
 # Calculate addition
-curl -X POST http://localhost:5005/calculate/add \
+curl -X POST http://localhost:8080/calculate/add \
   -H "Content-Type: application/json" \
   -d '{"x": 5, "y": 3}'
 ```
 
-3. Test ApplicationB monitoring:
+3. Test ApplicationB through ingress:
 ```bash
 # Check specific endpoint
-curl http://localhost:5001/check/health
+curl http://localhost:8081/check/health
 
 # Check all endpoints
-curl http://localhost:5001/check-all
+curl http://localhost:8081/check-all
 
 # Get overall status
-curl http://localhost:5001/status
+curl http://localhost:8081/status
 
 # Calculate with integers
-curl http://localhost:5001/calculate/int/5/3
+curl http://localhost:8081/calculate/int/5/3
 
 # Calculate with floats
-curl http://localhost:5001/calculate/float/5.0/3.0
+curl http://localhost:8081/calculate/float/5.0/3.0
 ```
-
 
 ## Stopping the Applications
 
@@ -141,3 +159,50 @@ docker-compose up -d
 # Stop applications
 docker-compose down
 ```
+
+## Monitoring
+
+### Envoy Admin Interfaces
+Each Envoy proxy provides an admin interface for monitoring:
+
+```bash
+# AppA Monitoring
+curl http://localhost:9901/server_info  # AppA Ingress
+curl http://localhost:9902/clusters     # AppA Proxy
+
+# AppB Monitoring
+curl http://localhost:9903/server_info  # AppB Ingress
+curl http://localhost:9904/clusters     # AppB Proxy
+```
+
+See [Envoy Admin Documentation](docs/envoy-admin.md) for more details.
+
+## Testing
+
+The project includes several test scripts in the `scripts` directory:
+
+```bash
+# Test all components
+./scripts/test-all.sh
+
+# Test individual components
+./scripts/test-appa.sh    # Test ApplicationA endpoints
+./scripts/test-appb.sh    # Test ApplicationB endpoints
+./scripts/test-envoy.sh   # Test Envoy admin interfaces
+./scripts/test-logs.sh   # Test Envoy access logging
+```
+
+Requirements:
+- `jq` command-line JSON processor
+  - Ubuntu: `sudo apt-get install jq`
+  - MacOS: `brew install jq`
+
+### Access Log Testing
+The `test-logs.sh` script verifies access logging by:
+1. Generating test traffic to all endpoints
+2. Checking logs from all Envoy proxies
+3. Analyzing logs for:
+    - Error responses
+    - Slow requests
+    - Client IP distribution
+    - Upstream service calls
