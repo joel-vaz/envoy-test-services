@@ -1,0 +1,41 @@
+services:
+  appa:
+    build:
+      context: .
+      dockerfile: docker/appA.Dockerfile
+    ports:
+      - "5005:5005"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      - ./src/appA/app:/app/app
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  appb:
+    build:
+      context: .
+      dockerfile: docker/appB.Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - TARGET_APP_URL=http://appa:5005
+    volumes:
+      - ./src/appB/app:/app/app
+    networks:
+      - app-network
+    depends_on:
+      appa:
+        condition: service_healthy
+
+networks:
+  app-network:
+    driver: bridge 
