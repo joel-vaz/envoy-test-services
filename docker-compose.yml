@@ -23,6 +23,7 @@ services:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
       - ./envoy/appA/proxy.yaml:/etc/envoy/envoy.yaml
+      - ./logs/appa/proxy:/var/log/envoy
     networks:
       - appa_net
       - proxy_net
@@ -36,6 +37,7 @@ services:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
       - ./envoy/appA/ingress.yaml:/etc/envoy/envoy.yaml
+      - ./logs/appa/ingress:/var/log/envoy
     ports:
       - "8080:8080"
       - "9901:9901"
@@ -67,6 +69,7 @@ services:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
       - ./envoy/appB/proxy.yaml:/etc/envoy/envoy.yaml
+      - ./logs/appb/proxy:/var/log/envoy
     networks:
       - appb_net
       - proxy_net
@@ -79,6 +82,7 @@ services:
     image: envoyproxy/envoy:v1.28-latest
     volumes:
       - ./envoy/appB/ingress.yaml:/etc/envoy/envoy.yaml
+      - ./logs/appb/ingress:/var/log/envoy
     ports:
       - "8081:8080"
       - "9903:9903"

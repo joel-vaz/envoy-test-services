@@ -17,6 +17,12 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
+# Create log directories
+mkdir -p logs/appa/proxy logs/appa/ingress logs/appb/proxy logs/appb/ingress
+
+# Set permissions
+chmod -R 777 logs/
+
 # Build and start the containers
 echo "Building and starting containers..."
 docker-compose up --build -d
