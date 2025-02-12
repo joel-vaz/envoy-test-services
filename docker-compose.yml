@@ -4,15 +4,10 @@ services:
     build:
       context: .
       dockerfile: docker/appA.Dockerfile
-    ports:
-      - "5005:5005"
-    environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
-    volumes:
-      - ./src/appA/app:/app/app
+    command: gunicorn --bind 0.0.0.0:5005 "app:create_app()"
     networks:
       - appa_net
+      - proxy_net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
       interval: 30s
@@ -33,8 +28,7 @@ services:
       appa:
         condition: service_healthy
     ports:
-      - "9902:9902"    # Main listener port
-      - "9906:9906"    # Admin port
+      - "9906:9906"    # Only expose admin port
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9906/ready"]
       interval: 10s
@@ -69,8 +63,7 @@ services:
     build:
       context: .
       dockerfile: docker/appB.Dockerfile
-    ports:
-      - "5001:5001"
+    command: gunicorn --bind 0.0.0.0:5001 "app:create_app()"
     networks:
       - appb_net
       - proxy_net
@@ -83,6 +76,11 @@ services:
     depends_on:
       appa:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/check/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   appb-proxy:
     build:
@@ -92,8 +90,7 @@ services:
       - ./envoy/appB/proxy.yaml:/etc/envoy/envoy.yaml
       - ./logs/appb/proxy:/var/log/envoy
     ports:
-      - "9904:9904"  # Admin
-      - "9905:9905"  # Proxy
+      - "9904:9904"    # Only expose admin port
     networks:
       - appb_net
       - proxy_net
@@ -131,5 +128,7 @@ services:
 
 networks:
   appa_net:    # Private network for AppA and its proxy
+    internal: true
   appb_net:    # Private network for AppB and its proxy
+    internal: true
   proxy_net:   # Shared network for proxies to communicate 

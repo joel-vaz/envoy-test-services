@@ -28,15 +28,6 @@ curl -s http://localhost:8080/hello | jq .
 echo -e "\nGET /whoami through ingress:"
 curl -s http://localhost:8080/whoami | jq .
 
-# 2. Direct AppA Tests (port 9902)
-echo -e "\n2. Testing AppA (Direct):"
-echo "-------------------------"
-# Test calculation endpoint
-echo "POST /calculate/add:"
-curl -s -X POST -H "Content-Type: application/json" \
-  http://localhost:9902/calculate/add \
-  -d '{"x":5,"y":3}' | jq .
-
 # 3. AppB Tests
 echo -e "\n3. Testing AppB Proxy:"
 echo "----------------------"
@@ -55,22 +46,6 @@ curl -s http://localhost:8081/check-all | jq .
 
 echo -e "\nGET /status:"
 curl -s http://localhost:8081/status | jq .
-
-# Test AppB through proxy (port 9905)
-echo -e "\nB. Testing through proxy (9905):"
-echo "POST /calculate/add:"
-curl -s -X POST -H "Content-Type: application/json" \
-  http://localhost:9905/calculate/add \
-  -d '{"x":5,"y":3}' | jq .
-
-echo -e "\nGET /check/health:"
-curl -s http://localhost:9905/check/health | jq .
-
-echo -e "\nGET /check-all:"
-curl -s http://localhost:9905/check-all | jq .
-
-echo -e "\nGET /status:"
-curl -s http://localhost:9905/status | jq .
 
 # 4. Health Status
 echo -e "\n4. Checking Service Health:"

@@ -58,11 +58,12 @@
 ## Network Architecture
 
 The system uses three Docker networks:
-1. `appa_net`: Private network for AppA and its proxy
-2. `appb_net`: Private network for AppB and its proxy
+1. `appa_net`: Private network for AppA and its proxy (internal)
+2. `appb_net`: Private network for AppB and its proxy (internal)
 3. `proxy_net`: Shared network for inter-service communication via proxies
 
 ### Network Isolation
+- All networks are internal except proxy_net
 - Applications can only communicate with their own proxy
 - Proxies can communicate with each other through the shared network
 - External traffic must go through ingress
@@ -92,4 +93,16 @@ curl http://localhost:8081/check/health
 ```bash
 # AppB checking AppA's health through proxies
 curl http://localhost:8081/check/health
-``` 
+```
+
+## Access Points
+
+### External Access
+- AppA: Ingress only (8080)
+- AppB: Ingress only (8081)
+
+### Admin Access
+- AppA Proxy: 9906
+- AppB Proxy: 9904
+- AppA Ingress: 9901
+- AppB Ingress: 9903 

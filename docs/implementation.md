@@ -64,3 +64,35 @@ src/
 - Endpoint health monitoring
 - Access log verification
 - Service mesh communication tests 
+
+# Network Isolation Implementation
+
+## Current State
+- AppA: accessible on port 5005
+- AppB: accessible on port 5001
+- All proxies working through ports 8080/8081
+- Inter-service communication working
+
+## Planned Changes
+
+### Phase 1: Network Isolation
+1. Add `internal: true` to private networks
+2. Test all functionality
+
+### Phase 2: Remove Direct Access
+1. Remove port 5005 from AppA
+2. Remove port 5001 from AppB
+3. Test all functionality
+
+### Phase 3: Clean Network Access
+1. Verify proxy_net connections
+2. Remove unnecessary network access
+3. Test all functionality
+
+## Testing Each Phase
+```bash
+# After each change:
+docker-compose down
+docker-compose up -d
+./scripts/test.sh
+``` 

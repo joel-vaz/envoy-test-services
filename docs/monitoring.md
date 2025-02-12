@@ -49,3 +49,18 @@ Consider monitoring these conditions:
 - Response time > 500ms
 - Failed health checks
 - Proxy restart events 
+
+# Monitoring Guide
+
+## Admin Interfaces
+
+### Available Endpoints
+Only admin interfaces are exposed externally:
+
+- AppA:
+  - Proxy Admin: http://localhost:9906/stats
+  - Ingress Admin: http://localhost:9901/stats
+
+- AppB:
+  - Proxy Admin: http://localhost:9904/stats
+  - Ingress Admin: http://localhost:9903/stats 

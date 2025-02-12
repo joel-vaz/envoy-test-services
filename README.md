@@ -4,32 +4,25 @@ This project demonstrates Envoy proxy configurations with two microservices (App
 
 ## Architecture
 
+### Secure Service Mesh Pattern
+- All external traffic must go through ingress proxies
+- Services can only communicate through their proxies
+- Direct access to services and proxies is blocked
+
 ```
-Client -> AppA Ingress (8080) -> AppA Proxy (9902) -> AppA (5005)
-Client -> AppB Ingress (8081) -> AppB Proxy (9905) -> AppB (5001) -> AppA Proxy (9902) -> AppA (5005)
+External -> AppA Ingress (8080) -> AppA Proxy -> AppA
+External -> AppB Ingress (8081) -> AppB Proxy -> AppB -> AppA Proxy -> AppA
 ```
 
 ## Components
 
 - **AppA**: Basic calculator service
-  - Direct access: port 5005
-  - Proxy access: port 9902
   - Ingress access: port 8080
-  - Endpoints:
-    - POST /calculate/add
-    - GET /health
-    - GET /hello
-    - GET /whoami
+  - Admin access: port 9906
 
 - **AppB**: Monitoring and proxy service
-  - Direct access: port 5001
-  - Proxy access: port 9905
   - Ingress access: port 8081
-  - Endpoints:
-    - POST /calculate/add (proxies to AppA)
-    - GET /check/health
-    - GET /check-all
-    - GET /status
+  - Admin access: port 9904
 
 ## Testing
 

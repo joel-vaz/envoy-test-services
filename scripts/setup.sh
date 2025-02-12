@@ -30,5 +30,5 @@ echo "Building and starting containers..."
 docker-compose up --build -d
 
 echo "Setup complete! Applications are running at:"
-echo "ApplicationA: http://localhost:5005"
-echo "ApplicationB: http://localhost:5001" 
+echo "ApplicationA: http://localhost:8080"
+echo "ApplicationB: http://localhost:8081" 

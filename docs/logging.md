@@ -11,12 +11,18 @@ Access logs are stored in the following locations:
 ```
 logs/
 ├── appa/
-│   ├── ingress/access.log  # AppA ingress proxy logs
-│   └── proxy/access.log    # AppA service proxy logs
+│   ├── ingress/access.log  # External traffic logs
+│   └── proxy/access.log    # Internal service mesh logs
 └── appb/
-    ├── ingress/access.log  # AppB ingress proxy logs
-    └── proxy/access.log    # AppB service proxy logs
+    ├── ingress/access.log  # External traffic logs
+    └── proxy/access.log    # Internal service mesh logs
 ```
+
+## Traffic Patterns
+All logs should show traffic flowing through the correct paths:
+- External requests -> Ingress logs only
+- Inter-service communication -> Proxy logs only
+- No direct service access logs
 
 ## Log Format
 All access logs are in JSON format with the following fields:
