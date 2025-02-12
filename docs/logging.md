@@ -55,4 +55,73 @@ tail -f logs/**/access.log
 ```
 
 ## Log Retention
-Logs are persisted to the host machine and survive container restarts. Consider implementing log rotation for production environments. 
+Logs are persisted to the host machine and survive container restarts. Consider implementing log rotation for production environments.
+
+# Logging Configuration
+
+## Access Log Format
+
+### AppA Proxy Logs
+```json
+{
+  "timestamp": "%START_TIME%",
+  "upstream_service": "%UPSTREAM_CLUSTER%",
+  "request_method": "%REQ(:METHOD)%",
+  "request_path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+  "response_code": "%RESPONSE_CODE%",
+  "response_time_ms": "%DURATION%",
+  "bytes_received": "%BYTES_RECEIVED%",
+  "bytes_sent": "%BYTES_SENT%",
+  "protocol": "%PROTOCOL%",
+  "response_flags": "%RESPONSE_FLAGS%",
+  "route_name": "%ROUTE_NAME%"
+}
+```
+
+### AppB Proxy Logs
+```json
+{
+  "timestamp": "%START_TIME%",
+  "upstream_service": "%UPSTREAM_CLUSTER%",
+  "request_method": "%REQ(:METHOD)%",
+  "request_path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+  "response_code": "%RESPONSE_CODE%",
+  "response_time_ms": "%DURATION%",
+  "bytes_received": "%BYTES_RECEIVED%",
+  "bytes_sent": "%BYTES_SENT%",
+  "protocol": "%PROTOCOL%",
+  "response_flags": "%RESPONSE_FLAGS%",
+  "route_name": "%ROUTE_NAME%"
+}
+```
+
+## Log Locations
+
+- AppA Ingress: `/dev/stdout` and `/var/log/envoy/access.log`
+- AppA Proxy: `/dev/stdout` and `/var/log/envoy/access.log`
+- AppB Ingress: `/dev/stdout` and `/var/log/envoy/access.log`
+- AppB Proxy: `/dev/stdout` and `/var/log/envoy/access.log`
+
+## Viewing Logs
+
+```bash
+# View all logs
+docker-compose logs
+
+# View specific component logs
+docker-compose logs appa-proxy
+docker-compose logs appb-proxy
+docker-compose logs appa-ingress
+docker-compose logs appb-ingress
+
+# Follow logs in real-time
+docker-compose logs -f
+```
+
+## Log Analysis
+
+The test suite includes log analysis features:
+- Response time monitoring
+- Error detection (4xx, 5xx responses)
+- Request path distribution
+- Upstream service tracking 

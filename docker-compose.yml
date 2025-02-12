@@ -20,7 +20,9 @@ services:
       retries: 3
 
   appa-proxy:
-    image: envoyproxy/envoy:v1.28-latest
+    build:
+      context: .
+      dockerfile: docker/envoy.Dockerfile
     volumes:
       - ./envoy/appA/proxy.yaml:/etc/envoy/envoy.yaml
       - ./logs/appa/proxy:/var/log/envoy
@@ -31,20 +33,36 @@ services:
       appa:
         condition: service_healthy
     ports:
-      - "9902:9902"
+      - "9902:9902"    # Main listener port
+      - "9906:9906"    # Admin port
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9906/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   appa-ingress:
-    image: envoyproxy/envoy:v1.28-latest
+    build:
+      context: .
+      dockerfile: docker/envoy.Dockerfile
     volumes:
       - ./envoy/appA/ingress.yaml:/etc/envoy/envoy.yaml
       - ./logs/appa/ingress:/var/log/envoy
     ports:
       - "8080:8080"
-      - "9901:9901"
+      - "9901:9901"    # AppA ingress admin
     networks:
       - proxy_net
     depends_on:
-      - appa-proxy
+      appa:
+        condition: service_healthy
+      appa-proxy:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9901/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Application B
   appb:
@@ -53,43 +71,63 @@ services:
       dockerfile: docker/appB.Dockerfile
     ports:
       - "5001:5001"
+    networks:
+      - appb_net
+      - proxy_net
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
-      - TARGET_APP_URL=http://localhost:8080
+      - TARGET_APP_URL=http://appa-proxy:9902
     volumes:
       - ./src/appB/app:/app/app
-    networks:
-      - appb_net
     depends_on:
       appa:
         condition: service_healthy
 
   appb-proxy:
-    image: envoyproxy/envoy:v1.28-latest
+    build:
+      context: .
+      dockerfile: docker/envoy.Dockerfile
     volumes:
       - ./envoy/appB/proxy.yaml:/etc/envoy/envoy.yaml
       - ./logs/appb/proxy:/var/log/envoy
+    ports:
+      - "9904:9904"  # Admin
+      - "9905:9905"  # Proxy
     networks:
       - appb_net
       - proxy_net
     depends_on:
-      - appb
-    ports:
-      - "9904:9904"
+      appb:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9904/ready"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
 
   appb-ingress:
-    image: envoyproxy/envoy:v1.28-latest
+    build:
+      context: .
+      dockerfile: docker/envoy.Dockerfile
     volumes:
       - ./envoy/appB/ingress.yaml:/etc/envoy/envoy.yaml
       - ./logs/appb/ingress:/var/log/envoy
     ports:
       - "8081:8080"
-      - "9903:9903"
+      - "9903:9903"    # AppB ingress admin
     networks:
       - proxy_net
     depends_on:
-      - appb-proxy
+      appb:
+        condition: service_started
+      appb-proxy:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9903/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   appa_net:    # Private network for AppA and its proxy

@@ -21,6 +21,10 @@ mkdir -p logs/appa/proxy logs/appa/ingress logs/appb/proxy logs/appb/ingress
 # Set permissions
 chmod -R 777 logs/
 
+# Set execute permissions for all scripts
+echo "Setting script permissions..."
+chmod +x scripts/*.sh
+
 # Build and start the containers
 echo "Building and starting containers..."
 docker-compose up --build -d

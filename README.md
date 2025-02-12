@@ -1,18 +1,56 @@
-# Flask Applications Monitor with Envoy Proxy
+# Envoy Learning Project
 
-A system of two Flask applications with Envoy proxy for service mesh and ingress traffic.
+This project demonstrates Envoy proxy configurations with two microservices (AppA and AppB) using different proxy patterns.
 
 ## Architecture
 
-Each application has three components:
-- Application container (Flask)
-- Proxy sidecar (Envoy for service-to-service communication)
-- Ingress sidecar (Envoy for external traffic)
+```
+Client -> AppA Ingress (8080) -> AppA Proxy (9902) -> AppA (5005)
+Client -> AppB Ingress (8081) -> AppB Proxy (9905) -> AppB (5001) -> AppA Proxy (9902) -> AppA (5005)
+```
 
-### Network Flow
-- External → AppA: Request → AppA Ingress (8080) → AppA Proxy (9901) → AppA (5005)
-- External → AppB: Request → AppB Ingress (8081) → AppB Proxy (9901) → AppB (5001)
-- Internal: AppB → AppB Proxy → AppA Proxy → AppA
+## Components
+
+- **AppA**: Basic calculator service
+  - Direct access: port 5005
+  - Proxy access: port 9902
+  - Ingress access: port 8080
+  - Endpoints:
+    - POST /calculate/add
+    - GET /health
+    - GET /hello
+    - GET /whoami
+
+- **AppB**: Monitoring and proxy service
+  - Direct access: port 5001
+  - Proxy access: port 9905
+  - Ingress access: port 8081
+  - Endpoints:
+    - POST /calculate/add (proxies to AppA)
+    - GET /check/health
+    - GET /check-all
+    - GET /status
+
+## Testing
+
+Run the test suite:
+```bash
+./scripts/test.sh
+```
+
+The test suite verifies:
+1. AppA functionality through ingress
+2. AppA direct access
+3. AppB functionality through both ingress and proxy
+4. Service health status
+5. Access logging
+
+## Envoy Configuration
+
+- **Access Logging**: JSON format with response times and request details
+- **Health Checks**: Active health checking between services
+- **Routing**: Path-based routing with header manipulation
+- **Admin Interface**: Available for each Envoy instance
 
 ## Project Structure
 
@@ -39,23 +77,6 @@ project/
 │   └── appB.Dockerfile
 └── docker-compose.yml
 ```
-
-## Applications
-
-### ApplicationA (Port 5005)
-Provides basic endpoints:
-- `GET /health` - Health check endpoint
-- `GET /hello` - Returns a hello message
-- `GET /whoami` - Returns client information
-- `POST /calculate/add` - Adds two numbers (requires JSON body: {"x": number, "y": number})
-
-### ApplicationB (Port 5001)
-Monitors ApplicationA with endpoints:
-- `GET /check/<endpoint>` - Check specific endpoint (health/hello/whoami)
-- `GET /check-all` - Check all endpoints
-- `GET /status` - Get overall ApplicationA status
-- `GET /calculate/int/<x>/<y>` - Calculate sum of integers using ApplicationA
-- `GET /calculate/float/<x>/<y>` - Calculate sum of floats using ApplicationA
 
 ## Running the Applications
 

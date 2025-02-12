@@ -66,6 +66,13 @@ static_resources:
     connect_timeout: 0.25s
     type: STRICT_DNS
     lb_policy: ROUND_ROBIN
+    health_checks:
+      - timeout: 1s
+        interval: 5s
+        unhealthy_threshold: 2
+        healthy_threshold: 1
+        http_health_check:
+          path: "/health"
     load_assignment:
       cluster_name: appA_proxy_cluster
       endpoints:
@@ -74,4 +81,4 @@ static_resources:
             address:
               socket_address:
                 address: appa-proxy
-                port_value: 9901 
+                port_value: 9902 

@@ -74,4 +74,4 @@ static_resources:
             address:
               socket_address:
                 address: appb-proxy
-                port_value: 9901 
+                port_value: 9905 

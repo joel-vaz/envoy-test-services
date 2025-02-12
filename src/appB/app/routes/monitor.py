@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from ..services.health_checker import HealthChecker
 from ..config import Config
 import logging
@@ -40,71 +40,33 @@ def status():
         'healthy_endpoints': sum(1 for result in results.values() if result['is_healthy'])
     })
 
-@monitor_bp.route('/calculate/<x>/<y>', methods=['GET'])
-def calculate(x, y):
+@monitor_bp.route('/calculate/add', methods=['POST'])
+def calculate():
     """Forward calculation request to ApplicationA"""
     try:
-        x_float = float(x)
-        y_float = float(y)
+        data = request.get_json()
+        if not data or 'x' not in data or 'y' not in data:
+            return jsonify({
+                'error': 'Missing required parameters x and y',
+                'status': 'error'
+            }), 400
         
-        logger.info(f"Calculate endpoint called with x={x_float}, y={y_float}")
+        logger.info(f"Calculate endpoint called with data: {data}")
+        result = health_checker.calculate_addition(float(data['x']), float(data['y']))
         
-        result = health_checker.calculate_addition(x_float, y_float)
         if not result.get('is_successful'):
             logger.error(f"Failed to get calculation: {result.get('error')}")
             return jsonify({
                 'error': 'Failed to get calculation from ApplicationA',
                 'details': result.get('error', 'Unknown error')
             }), 500
-            
+        
         return jsonify(result['response'])
     except ValueError:
         return jsonify({
             'error': 'Invalid number format',
             'status': 'error'
         }), 400
-    except Exception as e:
-        logger.error(f"Error processing calculation request: {str(e)}")
-        return jsonify({
-            'error': 'Internal server error',
-            'status': 'error'
-        }), 500
-
-@monitor_bp.route('/calculate/int/<int:x>/<int:y>', methods=['GET'])
-def calculate_int(x, y):
-    """Forward integer calculation request to ApplicationA"""
-    try:
-        logger.info(f"Calculate endpoint called with integers x={x}, y={y}")
-        result = health_checker.calculate_addition(float(x), float(y))
-        if not result.get('is_successful'):
-            logger.error(f"Failed to get calculation: {result.get('error')}")
-            return jsonify({
-                'error': 'Failed to get calculation from ApplicationA',
-                'details': result.get('error', 'Unknown error')
-            }), 500
-            
-        return jsonify(result['response'])
-    except Exception as e:
-        logger.error(f"Error processing calculation request: {str(e)}")
-        return jsonify({
-            'error': 'Internal server error',
-            'status': 'error'
-        }), 500
-
-@monitor_bp.route('/calculate/float/<float:x>/<float:y>', methods=['GET'])
-def calculate_float(x, y):
-    """Forward float calculation request to ApplicationA"""
-    try:
-        logger.info(f"Calculate endpoint called with floats x={x}, y={y}")
-        result = health_checker.calculate_addition(x, y)
-        if not result.get('is_successful'):
-            logger.error(f"Failed to get calculation: {result.get('error')}")
-            return jsonify({
-                'error': 'Failed to get calculation from ApplicationA',
-                'details': result.get('error', 'Unknown error')
-            }), 500
-            
-        return jsonify(result['response'])
     except Exception as e:
         logger.error(f"Error processing calculation request: {str(e)}")
         return jsonify({

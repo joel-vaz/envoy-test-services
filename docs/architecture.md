@@ -1,20 +1,59 @@
-# Service Architecture with Envoy
+# Architecture Details
 
-## Overview
+## Service Architecture
 
-The system consists of two applications (AppA and AppB) with each application having its own Envoy proxy setup:
-- Application container
-- Proxy sidecar container (for service-to-service communication)
-- Ingress sidecar container (for external traffic)
+### AppA (Calculator Service)
+- **Core Service**: Flask application providing calculation endpoints
+- **Proxy Layer**: Envoy proxy handling direct access
+- **Ingress Layer**: Envoy ingress for external access
+
+#### Endpoints
+- `POST /calculate/add`: Add two numbers
+- `GET /health`: Health check endpoint
+- `GET /hello`: Simple greeting endpoint
+- `GET /whoami`: Client information endpoint
+
+### AppB (Monitor Service)
+- **Core Service**: Flask application providing monitoring and proxying
+- **Proxy Layer**: Envoy proxy handling direct access and AppA communication
+- **Ingress Layer**: Envoy ingress for external access
+
+#### Endpoints
+- `POST /calculate/add`: Proxies calculation to AppA
+- `GET /check/health`: Check AppA health
+- `GET /check-all`: Check all AppA endpoints
+- `GET /status`: Get overall AppA status
 
 ## Network Flow
 
-### External Traffic
-1. External Request → AppA Ingress (8080) → AppA Proxy (9901) → AppA (5005)
-2. External Request → AppB Ingress (8081) → AppB Proxy (9901) → AppB (5001)
+1. **Direct AppA Access**:
+   ```
+   Client -> AppA Ingress (8080) -> AppA Proxy (9902) -> AppA (5005)
+   ```
 
-### Internal Communication
-AppB → AppB Proxy → AppA Proxy → AppA
+2. **AppB Proxied Access**:
+   ```
+   Client -> AppB Ingress (8081) -> AppB Proxy (9905) -> AppB (5001) -> AppA Proxy (9902) -> AppA (5005)
+   ```
+
+## Envoy Configuration
+
+### Access Logging
+- JSON formatted logs
+- Response times in milliseconds
+- Request/response details
+- Protocol information
+
+### Health Checking
+- Active health checks between services
+- Configurable intervals and thresholds
+- Health status exposed via admin interface
+
+### Admin Interfaces
+- AppA Ingress: port 9901
+- AppA Proxy: port 9906
+- AppB Ingress: port 9903
+- AppB Proxy: port 9904
 
 ## Network Architecture
 
